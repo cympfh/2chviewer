@@ -1,0 +1,34 @@
+#!/bin/bash
+
+DOMAIN=hayabusa7.2ch.net
+BOARD=liveanb
+
+BOARDURL=http://$DOMAIN/$BOARD/subback.html
+
+clear
+
+curl -s $BOARDURL | nkf | grep l50 > html/thread.html
+cat html/thread.html | sed 's/<[^>]*>//g'
+
+echo -n "thread number> "
+read num
+
+ID=`cat html/thread.html | grep ">$num:" | sed 's/.*href=.//' | sed 's/.l50.*//'`
+THREADURL=http://$DOMAIN/test/read.cgi/$BOARD/$ID/
+
+echo $THREADURL
+OUT=`cd $(dirname $0) && pwd`
+OUT=${OUT%/}/html/$ID.html
+echo $OUT
+
+while :; do
+  cp html/head.html $OUT
+  echo "<h2>$THREADURL</h2>" >> $OUT
+  curl -s $THREADURL | grep '^<dt>' | nkf | sed 's/.*<dd>//' | sed 's/ <br><br>$//' |
+  sed 's/<a href[^>]*>//g' | sed 's#</a>##g' |
+  sed 's/http/ttp/g' | sed 's/ttp/http/g' |
+  sed 's/http[^ <>]*jpg/<img class="minimg" src="&">/g' |
+  sed 's/.*/<code>&<\/code>/' >> $OUT
+  sleep 3
+done
+
